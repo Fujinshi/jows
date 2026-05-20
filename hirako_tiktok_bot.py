@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HIRAKO AUTO LIKE TIKTOK BOT - GITHUB ACTIONS READY
+HIRAKO AUTO LIKE TIKTOK BOT - GITHUB ACTIONS READY (FIXED)
 - Support GitHub Actions 24/7
 - Auto commit & save state
 - No spam - Single shot langsung like sekali
@@ -223,7 +223,6 @@ class ProxyManager:
     
     def blacklist_proxy(self, proxy_url):
         self.blacklisted.add(proxy_url)
-        # Remove from active list
         if proxy_url in self.proxies:
             self.proxies.remove(proxy_url)
 
@@ -243,6 +242,11 @@ class AutoLikeBot:
         self.success_count = saved.get('success_count', 0)
         self.fail_count = saved.get('fail_count', 0)
         self.request_count = saved.get('request_count', 0)
+    
+    @property
+    def total_likes(self):
+        """Property to get total likes"""
+        return self.success_count * 10
     
     def get_service_id(self, session):
         try:
@@ -313,14 +317,14 @@ class AutoLikeBot:
                 self.success_count += 1
                 self.request_count += 1
                 self.processing = False
-                save_state(self)  # Auto-save after success
+                save_state(self)
                 return {"success": True, "message": "✅ +10 Likes!", "url": target_url}
             elif 'limit' in text or 'maksimal' in text or 'sudah pernah' in text or 'already' in text:
                 self.fail_count += 1
                 self.request_count += 1
                 self.proxy_manager.blacklist_proxy(proxy_url)
                 self.processing = False
-                return {"success": False, "message": "⚠️ Limit tercapai (video sudah pernah di-like)", "url": target_url}
+                return {"success": False, "message": "⚠️ Limit tercapai", "url": target_url}
             else:
                 self.fail_count += 1
                 self.request_count += 1
