@@ -1,0 +1,62 @@
+name: HIRAKO TikTok Bot - 24/7 Auto Like
+
+on:
+  schedule:
+    # Jalankan setiap 10 menit untuk 24/7 operation
+    - cron: '*/10 * * * *'
+  workflow_dispatch:  # Manual trigger dari GitHub
+  push:
+    branches: [ main ]
+    paths:
+      - 'links.txt'
+      - 'hirako_tiktok_bot.py'
+
+jobs:
+  run-hirako-bot:
+    name: HIRAKO Auto Like Bot
+    runs-on: ubuntu-latest
+    timeout-minutes: 10  # Maksimal 10 menit per run
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 urllib3
+      
+      - name: Setup Git Config
+        run: |
+          git config --global user.name "Hirako Bot"
+          git config --global user.email "hirako@tiktok.bot"
+      
+      - name: Run HIRAKO Bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_ADMIN_ID: ${{ secrets.TELEGRAM_ADMIN_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python hirako_tiktok_bot.py
+      
+      - name: Commit and Push Changes
+        if: always()
+        run: |
+          git add links.txt bot_state.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "🤖 Auto-save by Hirako Bot [skip ci]"
+          git push origin HEAD:main || true
+      
+      - name: Send Completion Notification
+        if: always()
+        run: |
+          echo "✅ HIRAKO Bot run completed at $(date)" >> $GITHUB_STEP_SUMMARY
